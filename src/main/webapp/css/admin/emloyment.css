@@ -1,0 +1,92 @@
+* Table Header *
+.thead-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.thead-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+     white-space: nowrap;
+}
+
+/* Table Hover Effect */
+.table-hover tbody tr:hover {
+    background-color: #f0f7ff;
+    cursor: pointer;
+}
+#tableNhanVien tbody td {
+    white-space: nowrap; /* Giữ tất cả trên 1 dòng */
+}
+
+/* Badge Styles */
+.badge {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.badge-success { background-color: #28a745; color: white; }
+.badge-danger { background-color: #dc3545; color: white; }
+
+/* Modal Header Colors */
+.modal-header.bg-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca) !important;
+}
+
+.modal-header.bg-info {
+    background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
+}
+
+/* Form Labels */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+/* Button Hover Effects */
+.btn-info:hover {
+    background-color: #0aa2c0;
+    border-color: #0aa2c0;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Pagination Active State */
+.page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Search Input Focus */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Responsive Table on Mobile */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
