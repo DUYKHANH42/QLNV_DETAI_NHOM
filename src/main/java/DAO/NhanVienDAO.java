@@ -4,7 +4,9 @@ import Model.NhanVien;
 import util.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NhanVienDAO {
 
@@ -69,6 +71,32 @@ public class NhanVienDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public List<NhanVien> getByTen(String tenNV) {
+        List<NhanVien> list = new ArrayList<>();
+        String sql = "SELECT nv.*, pb.TenPB "
+                + "FROM NhanVien nv "
+                + "LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB "
+                + "WHERE nv.HoTen LIKE ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + tenNV + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    NhanVien nv = new NhanVien();
+                    nv.setMaNV(rs.getString("MaNV"));
+                    nv.setHoTen(rs.getString("HoTen"));
+                    nv.setMaPB(rs.getString("MaPB"));
+                    nv.setTenPB(rs.getString("TenPB"));
+                    list.add(nv);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     public int insert(NhanVien nv) {
@@ -199,8 +227,29 @@ public class NhanVienDAO {
 
         return list;
     }
-    // Đếm tổng nhân viên
+public List<NhanVien> getByPhongBan(String maPB) {
+    List<NhanVien> list = new ArrayList<>();
+    String sql = "SELECT nv.*, pb.TenPB FROM NhanVien nv LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB WHERE nv.MaPB = ?";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, maPB);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            NhanVien nv = new NhanVien();
+            nv.setMaNV(rs.getString("MaNV"));
+            nv.setHoTen(rs.getString("HoTen"));
+            nv.setMaPB(rs.getString("MaPB"));
+            nv.setTenPB(rs.getString("TenPB"));
+            list.add(nv);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return list;
+}
 
+
+    // Đếm tổng nhân viên
     public int countAllNhanVien() {
         String sql = "SELECT COUNT(*) FROM NhanVien";
         try (Connection conn = DBConnection.getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
@@ -212,21 +261,20 @@ public class NhanVienDAO {
         }
         return 0;
     }
-    public int demNhanVienTheoPhong(int maPB) {
-    String sql = "SELECT COUNT(*) FROM NhanVien WHERE MaPB = ?";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, maPB);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return 0;
-}
 
+    public int demNhanVienTheoPhong(int maPB) {
+        String sql = "SELECT COUNT(*) FROM NhanVien WHERE MaPB = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maPB);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
 // Đếm số nhân viên theo phòng
     public int countNhanVienTheoPhong(int maPB) {
@@ -277,31 +325,31 @@ public class NhanVienDAO {
         }
         return "Không xác định";
     }
+
     public List<NhanVien> getNhanVienTheoPhongBan(String maPB) {
-    List<NhanVien> list = new ArrayList<>();
-    String sql = "SELECT nv.*, pb.TenPB "
-               + "FROM NhanVien nv "
-               + "LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB "
-               + "WHERE nv.MaPB = ? "
-               + "ORDER BY nv.MaNV";
+        List<NhanVien> list = new ArrayList<>();
+        String sql = "SELECT nv.*, pb.TenPB "
+                + "FROM NhanVien nv "
+                + "LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB "
+                + "WHERE nv.MaPB = ? "
+                + "ORDER BY nv.MaNV";
 
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setString(1, maPB);
+            ps.setString(1, maPB);
 
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapResultSetToNhanVien(rs));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToNhanVien(rs));
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return list;
     }
-
-    return list;
-}
 
     private NhanVien mapResultSetToNhanVien(ResultSet rs) throws SQLException {
         return new NhanVien(

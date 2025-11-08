@@ -1,6 +1,6 @@
 $(document).ready(function () {
     $(document).on('submit', '#formAddEmployee', function (e) {
-       
+
 
         const form = $(this);
 
@@ -57,7 +57,7 @@ function deleteNhanVien(id) {
                 dataType: 'json',
                 success: function (response) {
                     if (response.status === 'success') {
-                       loadTable();
+                        loadTable();
                         Swal.fire({
                             icon: 'success',
                             title: 'Đã xóa!',
@@ -149,9 +149,13 @@ $(document).on('submit', '#FormEditEmployment', function (e) {
         }
     });
 });
- function loadTable(page) {
- if (!page || page === 'undefined') page = $('#currentPage').val() || 1;
- console.log(page);
+
+function loadTable(page) {
+    if (!page || page === 'undefined' || isNaN(page) || page < 1) {
+        page = parseInt($('#currentPage').val()) || 1;
+    } else {
+        page = parseInt(page);
+    }
     $.ajax({
         url: 'emloyment?action=list&page=' + page,
         method: 'GET',
@@ -168,6 +172,35 @@ $(document).on('submit', '#FormEditEmployment', function (e) {
         }
     });
 }
+$(document).on('click', '#btnExportExcel', function (e) {
+    e.preventDefault();
+    const hoten = $('#hoten').val() || '';
+    const phongban = $('#filter-phongban').val() || '';
+
+    fetch('emloyment?action=export', {
+        method: 'POST',
+        body: new URLSearchParams({hoten, phongban})
+    })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                let fileName = 'DanhSachNhanVien';
+                if (phongban)
+                    fileName += `_${phongban}`;
+                a.download = `${fileName}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            .catch(() => {
+                Swal.fire('❌ Xuất Excel thất bại!');
+            });
+});
+
+
+
 
 
 

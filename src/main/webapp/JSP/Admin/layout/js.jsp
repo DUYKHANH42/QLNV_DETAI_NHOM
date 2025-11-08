@@ -13,3 +13,4 @@
 <script src="<%= request.getContextPath() %>/js/index.js"></script>
 <script src="<%= request.getContextPath() %>/js/emloyment.js"></script>
 <script src="<%= request.getContextPath() %>/js/department.js"></script>
+<script src="<%= request.getContextPath() %>/js/checkin.js"></script>

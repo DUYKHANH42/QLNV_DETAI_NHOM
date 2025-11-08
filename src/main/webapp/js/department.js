@@ -159,7 +159,7 @@ $(document).ready(function () {
                             <td><span class="badge badge-${nv.chucVu === 'Trưởng Phòng' ? 'warning' : 'info'}">${nv.chucVu}</span></td>
                             <td>${nv.email}</td>
                             <td>${nv.SDT}</td>
-                            <td><span class="badge badge-${nv.trangThai === 'Hoạt động' ? 'success' : 'warning'}">${nv.trangThai}</span></td>
+                            <td><span class="badge badge-${nv.trangThai === 'Đang làm' ? 'success' : 'warning'}">${nv.trangThai}</span></td>
                         </tr>
                     `);
                     });
@@ -193,3 +193,37 @@ $(document).ready(function () {
     // Load lần đầu khi mở trang
     loadPhongBan();
 });
+$(document).on('click', '#btnExportPhongBan', function (e) {
+    e.preventDefault();
+
+    fetch('department?action=exportExcel', { // servlet xử lý xuất Excel phòng ban
+        method: 'POST'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Lỗi khi xuất Excel");
+        return res.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'DanhSachPhongBan.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Xuất Excel thất bại!',
+            text: 'Đã xảy ra lỗi khi tải file.'
+        });
+    });
+});
+$(document).on('click', '#btnExportPDF', function () {
+    const maPB = $('#detail-maPB').text();
+    window.open('department?action=exportPDF&id=' + maPB, '_blank');
+});
+

@@ -30,7 +30,7 @@
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addDepartmentModal">
                             <i class="fas fa-plus-circle"></i> Thêm Phòng Ban
                         </button>
-                        <button class="btn btn-success ml-2">
+                        <button id="btnExportPhongBan" class="btn btn-success ml-2">
                             <i class="fas fa-file-export"></i> Xuất Excel
                         </button>
                     </div>
@@ -80,9 +80,9 @@
                                         </p>
                                         <p class="mb-2"><strong>Số nhân viên:</strong> ${nhanVienTheoPhongMap[pb.maPB]}</p>
                                     </div>
-                                        <button class="btn btn-outline-primary btn-block btn-detail-department" data-mapb="${pb.maPB}">
-                                            <i class="fas fa-eye"></i> Xem Chi Tiết
-                                        </button>
+                                    <button class="btn btn-outline-primary btn-block btn-detail-department" data-mapb="${pb.maPB}">
+                                        <i class="fas fa-eye"></i> Xem Chi Tiết
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -235,9 +235,6 @@
                 </div>
             </div>
         </div>
-
-
-        <!-- Modal Chi Tiết Phòng Ban -->
         <!-- Modal Chi Tiết Phòng Ban -->
         <div class="modal fade" id="departmentDetailModal" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-xl" role="document">
@@ -310,7 +307,7 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times"></i> Đóng
                         </button>
-                        <button type="button" class="btn btn-primary">
+                        <button type="button" id="btnExportPDF" class="btn btn-primary">
                             <i class="fas fa-file-pdf"></i> Xuất PDF
                         </button>
                     </div>

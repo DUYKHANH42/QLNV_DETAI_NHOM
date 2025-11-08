@@ -4,8 +4,10 @@
  */
 package Model;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
+import org.apache.poi.hpsf.Decimal;
 
 /**
  *
@@ -18,6 +20,7 @@ public class ChamCong {
     private Date ngayLam;
     private String trangThai;
     private Time gioVao;
+    private BigDecimal sogioLam;
     private Time gioRa;
 
     public ChamCong(int maCC, String maNV, Date ngayLam, String trangThai, Time gioVao, Time gioRa) {
@@ -41,6 +44,14 @@ public class ChamCong {
 
     public int getMaCC() {
         return maCC;
+    }
+
+    public BigDecimal getSogioLam() {
+        return sogioLam;
+    }
+
+    public void setSogioLam(BigDecimal sogioLam) {
+        this.sogioLam = sogioLam;
     }
 
     public void setMaCC(int maCC) {

@@ -20,10 +20,23 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -67,7 +80,6 @@ public class EmloymentServlet extends HttpServlet {
                 hienThiDanhSach(request, response);
                 break;
             case "add":
-                System.out.println("HAHA");
                 xuLiThem(request, response);
                 break;
             case "search":
@@ -82,8 +94,11 @@ public class EmloymentServlet extends HttpServlet {
             case "getById":
                 GetById(request, response);
                 break;
+            case "export":
+                exportExcel(request, response);
+                break;
             default:
-//                hienThiDanhSach(request, response);
+                hienThiDanhSach(request, response);
         }
 
     }
@@ -231,7 +246,7 @@ public class EmloymentServlet extends HttpServlet {
             nvJson.put("maNV", nvMoi.getMaNV());
             nvJson.put("hoTen", nvMoi.getHoTen());
             nvJson.put("maPB", nvMoi.getMaPB());
-            nvJson.put("tenPB", pb != null ? pb.getTenPB(): "");
+            nvJson.put("tenPB", pb != null ? pb.getTenPB() : "");
             nvJson.put("chucVu", nvMoi.getChucVu());
             nvJson.put("email", nvMoi.getEmail());
             nvJson.put("sdt", nvMoi.getSDT());
@@ -250,42 +265,41 @@ public class EmloymentServlet extends HttpServlet {
         response.getWriter().write(new Gson().toJson(map));
     }
 
-   private void xuliXoa(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    response.setContentType("application/json;charset=UTF-8");
-    Map<String, Object> map = new HashMap<>();
+    private void xuliXoa(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        Map<String, Object> map = new HashMap<>();
 
-    try {
-        String maNV = request.getParameter("id");
-        boolean success = nvdao.delete(maNV);
+        try {
+            String maNV = request.getParameter("id");
+            boolean success = nvdao.delete(maNV);
 
-        if (success) {
-            tkdao.delete(maNV);
-            map.put("status", "success");
-            map.put("message", "Xóa nhân viên thành công!");
-        } else {
-            map.put("status", "error");
-            map.put("message", "Xóa nhân viên thất bại!");
-        }
+            if (success) {
+                tkdao.delete(maNV);
+                map.put("status", "success");
+                map.put("message", "Xóa nhân viên thành công!");
+            } else {
+                map.put("status", "error");
+                map.put("message", "Xóa nhân viên thất bại!");
+            }
 
-    } catch (SQLException ex) {
-        if ("foreign_key_violation".equals(ex.getMessage())) {
-            map.put("status", "error");
-            map.put("message", "Không thể xóa nhân viên vì đang được tham chiếu ở bảng khác!");
-        } else {
+        } catch (SQLException ex) {
+            if ("foreign_key_violation".equals(ex.getMessage())) {
+                map.put("status", "error");
+                map.put("message", "Không thể xóa nhân viên vì đang được tham chiếu ở bảng khác!");
+            } else {
+                ex.printStackTrace();
+                map.put("status", "error");
+                map.put("message", "Lỗi SQL: " + ex.getMessage());
+            }
+
+        } catch (Exception ex) {
             ex.printStackTrace();
             map.put("status", "error");
-            map.put("message", "Lỗi SQL: " + ex.getMessage());
+            map.put("message", "Lỗi khi xóa: " + ex.getMessage());
         }
 
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        map.put("status", "error");
-        map.put("message", "Lỗi khi xóa: " + ex.getMessage());
+        response.getWriter().write(new Gson().toJson(map));
     }
-
-    response.getWriter().write(new Gson().toJson(map));
-}
-
 
     private void GetById(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -348,7 +362,7 @@ public class EmloymentServlet extends HttpServlet {
                     nvJson.put("maNV", nvMoi.getMaNV());
                     nvJson.put("hoTen", nvMoi.getHoTen());
                     nvJson.put("maPB", nvMoi.getMaPB());
-                    nvJson.put("tenPB", pb != null ? pb.getTenPB(): "");
+                    nvJson.put("tenPB", pb != null ? pb.getTenPB() : "");
                     nvJson.put("chucVu", nvMoi.getChucVu());
                     nvJson.put("email", nvMoi.getEmail());
                     nvJson.put("sdt", nvMoi.getSDT());
@@ -372,6 +386,124 @@ public class EmloymentServlet extends HttpServlet {
         }
 
         response.getWriter().write(new Gson().toJson(map));
+    }
+
+    private void exportExcel(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String hoten = request.getParameter("hoten");
+        String phongban = request.getParameter("phongban");
+        List<NhanVien> list;
+
+        if ((hoten != null && !hoten.isEmpty()) || (phongban != null && !phongban.isEmpty())) {
+            list = nvdao.searchAdvanced(hoten, phongban);
+        } else {
+            list = nvdao.getAll();
+        }
+
+        System.out.println("Tổng nhân viên xuất Excel: " + list.size());
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Danh sách nhân viên");
+
+            // 🟩 Tạo style cho header
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            // 🟦 Style cho “Mã NV” và “Họ Tên”
+            CellStyle highlightStyle = workbook.createCellStyle();
+            highlightStyle.cloneStyleFrom(headerStyle);
+            highlightStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
+            highlightStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // 🟨 Style cho dữ liệu chung
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+            dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            // 🟢 Style cho trạng thái "Đang làm"
+            CellStyle workingStyle = workbook.createCellStyle();
+            workingStyle.cloneStyleFrom(dataStyle);
+            workingStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            workingStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // 🔴 Style cho trạng thái "Đã nghỉ"
+            CellStyle quitStyle = workbook.createCellStyle();
+            quitStyle.cloneStyleFrom(dataStyle);
+            quitStyle.setFillForegroundColor(IndexedColors.ROSE.getIndex());
+            quitStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Row header = sheet.createRow(0);
+            String[] headers = {"Mã NV", "Họ Tên", "Phòng Ban", "Chức Vụ", "Email", "SĐT", "Trạng Thái"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+                // 2 cột đầu (Mã NV, Họ Tên) dùng màu khác
+                if (i <= 1) {
+                    cell.setCellStyle(highlightStyle);
+                } else {
+                    cell.setCellStyle(headerStyle);
+                }
+            }
+
+            // 📄 Ghi dữ liệu
+            int rowNum = 1;
+            for (NhanVien nv : list) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(nv.getMaNV());
+                row.createCell(1).setCellValue(nv.getHoTen());
+                row.createCell(2).setCellValue(nv.getTenPB());
+                row.createCell(3).setCellValue(nv.getChucVu());
+                row.createCell(4).setCellValue(nv.getEmail());
+                row.createCell(5).setCellValue(nv.getSDT());
+                row.createCell(6).setCellValue(nv.getTrangThai());
+
+                // Áp style cho các cell dữ liệu
+                for (int i = 0; i < headers.length; i++) {
+                    Cell cell = row.getCell(i);
+                    if (cell == null) {
+                        continue;
+                    }
+                    if (i == 6) { // Cột trạng thái
+                        String trangThai = nv.getTrangThai().toLowerCase();
+                        if (trangThai.contains("đang") || trangThai.contains("lam") || trangThai.contains("làm")) {
+                            cell.setCellStyle(workingStyle); // Đang làm → xanh
+                        } else {
+                            cell.setCellStyle(quitStyle); // Đã nghỉ → đỏ
+                        }
+                    } else {
+                        cell.setCellStyle(dataStyle);
+                    }
+                }
+            }
+
+            // 🔄 Tự động giãn độ rộng cột
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // 📥 Gửi file về client
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=DanhSachNhanVien.xlsx");
+
+            try (ServletOutputStream out = response.getOutputStream()) {
+                workbook.write(out);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Xuất Excel thất bại!");
+        }
     }
 
 }

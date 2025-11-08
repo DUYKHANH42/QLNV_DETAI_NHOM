@@ -64,7 +64,7 @@
                 <div class="card">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-list"></i> Danh Sách Nhân Viên</h5>
-                        <button class="btn btn-sm btn-secondary">
+                        <button id="btnExportExcel" class="btn btn-sm btn-secondary">
                             <i class="fas fa-file-export"></i> Xuất Excel
                         </button>
                     </div>
@@ -145,9 +145,9 @@
                             <input type="hidden" name="action" value="add" />
                             <div class="modal-header bg-primary text-white">
                                 <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i> Thêm Nhân Viên</h5>
-                              <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
                             </div>
                             <div class="modal-body">
                                 <div class="row">

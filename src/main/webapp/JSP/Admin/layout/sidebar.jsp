@@ -27,7 +27,7 @@
             </a>
         </li>
         <li>
-            <a href="<%= request.getContextPath() %>/admin/checkin.jsp">
+            <a href="checkin" class="ajax-link">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Chấm Công</span>
             </a>
