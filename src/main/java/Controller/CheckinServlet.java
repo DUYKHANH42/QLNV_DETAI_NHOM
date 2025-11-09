@@ -137,7 +137,7 @@ public class CheckinServlet extends HttpServlet {
                 exportPDFChiTietCC(request, response);
                 break;
             default:
-//                hienThiDanhSach(request, response);
+                hienThiDanhSach(request, response);
         }
     }
 
@@ -861,13 +861,9 @@ public class CheckinServlet extends HttpServlet {
             document.add(new Paragraph("Phòng ban: " + nv.getTenPB(), fontNormal));
             document.add(new Paragraph("Tháng: " + thang + "/" + nam, fontNormal));
             document.add(Chunk.NEWLINE);
-
-            // Bảng chi tiết
-            PdfPTable table = new PdfPTable(6); // Ngày, Thứ, Giờ vào, Giờ ra, Tổng giờ, Trạng thái
+            PdfPTable table = new PdfPTable(6); 
             table.setWidthPercentage(100);
             table.setWidths(new float[]{2, 3, 3, 3, 3, 4});
-
-            // Header
             String[] headers = {"Ngày", "Thứ", "Giờ Vào", "Giờ Ra", "Tổng Giờ", "Trạng Thái"};
             for (String h : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(h, fontBold));
@@ -890,9 +886,7 @@ public class CheckinServlet extends HttpServlet {
                 double tongGio = 0;
                 String trangThaiText = "";
                 BaseColor bgColor = BaseColor.WHITE;
-
                 boolean isSunday = ngay.getDayOfWeek() == DayOfWeek.SUNDAY;
-
                 if (c != null) {
                     gioVao = c.getGioVao() != null ? c.getGioVao().toString() : "--:--";
                     gioRa = c.getGioRa() != null ? c.getGioRa().toString() : "--:--";
@@ -901,30 +895,28 @@ public class CheckinServlet extends HttpServlet {
                     switch (c.getTrangThai()) {
                         case "present":
                             trangThaiText = "Đi làm";
-                            bgColor = new BaseColor(200, 255, 200); // xanh nhạt
+                            bgColor = new BaseColor(200, 255, 200);
                             break;
                         case "late":
                             trangThaiText = "Đi muộn";
-                            bgColor = new BaseColor(255, 255, 200); // vàng nhạt
+                            bgColor = new BaseColor(255, 255, 200);
                             break;
                         case "leave":
                             trangThaiText = "Nghỉ phép";
-                            bgColor = new BaseColor(255, 255, 180); // vàng nhẹ
+                            bgColor = new BaseColor(255, 255, 180); 
                             break;
                         default:
                             trangThaiText = isSunday ? "Ngày nghỉ" : "Vắng";
-                            bgColor = new BaseColor(255, 200, 200); // đỏ nhạt
+                            bgColor = new BaseColor(255, 200, 200);
                             break;
                     }
                 } else if (isSunday) {
                     trangThaiText = "Ngày nghỉ";
-                    bgColor = new BaseColor(255, 255, 180); // vàng nhẹ
+                    bgColor = new BaseColor(255, 255, 180);
                 } else {
                     trangThaiText = "Vắng";
-                    bgColor = new BaseColor(255, 200, 200); // đỏ nhạt
+                    bgColor = new BaseColor(255, 200, 200); 
                 }
-
-                // Tạo ô cho từng cột
                 PdfPCell cellNgay = new PdfPCell(new Phrase(String.format("%02d/%02d", day, thang), fontNormal));
                 cellNgay.setBackgroundColor(bgColor);
                 cellNgay.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -977,8 +969,6 @@ public class CheckinServlet extends HttpServlet {
 
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Bảng Chấm Công");
-
-        // Title
         Row titleRow = sheet.createRow(0);
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("Bảng Chấm Công - Ngày " + date);
@@ -992,8 +982,6 @@ public class CheckinServlet extends HttpServlet {
         titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
-
-        // Header (từ hàng 1)
         Row headerRow = sheet.createRow(1);
         CellStyle headerStyle = workbook.createCellStyle();
         Font font = workbook.createFont();
@@ -1009,8 +997,6 @@ public class CheckinServlet extends HttpServlet {
             cell.setCellStyle(headerStyle);
             sheet.autoSizeColumn(i);
         }
-
-        // Dữ liệu bắt đầu từ hàng 2
         int rowNum = 2;
         for (NhanVien nv : dsNhanVien) {
             List<ChamCong> dsCC = ccdao.getChamCongTheoThang(nv.getMaNV(), date.getMonthValue(), date.getYear());
@@ -1025,8 +1011,6 @@ public class CheckinServlet extends HttpServlet {
 
             String gioVao = dsCC.size() > 0 && dsCC.get(0).getGioVao() != null ? dsCC.get(0).getGioVao().toString() : "--:--";
             String gioRa = dsCC.size() > 0 && dsCC.get(0).getGioRa() != null ? dsCC.get(0).getGioRa().toString() : "--:--";
-
-            // Trạng thái: nếu coMat > 0 thì Đi làm, không có bản ghi thì Vắng
             String trangThai = coMat > 0 ? "Đi làm" : "Vắng";
 
             Row row = sheet.createRow(rowNum++);

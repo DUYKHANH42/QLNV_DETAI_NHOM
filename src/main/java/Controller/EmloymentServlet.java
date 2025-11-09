@@ -120,8 +120,8 @@ public class EmloymentServlet extends HttpServlet {
 //        if (user == null) {
 //            response.sendRedirect(request.getContextPath() + "/login");
 //            return;
-//        }
-        hienThiDanhSach(request, response);
+//        }     
+processRequest(request, response);
     }
 
     /**

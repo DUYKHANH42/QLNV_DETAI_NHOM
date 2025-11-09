@@ -24,19 +24,19 @@ import javax.servlet.http.HttpSession;
  *
  * @author PC
  */
-@WebFilter(filterName = "AuthFilter", urlPatterns = {"/home","/emloyment"})
+@WebFilter(filterName = "AuthFilter", urlPatterns = {"/login", "/*"})
 public class AuthFilter implements Filter {
-    
+
     private static final boolean debug = true;
 
     // The filter configuration object we are associated with.  If
     // this value is null, this filter instance is not currently
     // configured.
     private FilterConfig filterConfig = null;
-    
+
     public AuthFilter() {
     }
-    
+
     private void doBeforeProcessing(ServletRequest request, ServletResponse response)
             throws IOException, ServletException {
         if (debug) {
@@ -64,7 +64,7 @@ public class AuthFilter implements Filter {
 	}
          */
     }
-    
+
     private void doAfterProcessing(ServletRequest request, ServletResponse response)
             throws IOException, ServletException {
         if (debug) {
@@ -99,28 +99,47 @@ public class AuthFilter implements Filter {
      * @exception IOException if an input/output error occurs
      * @exception ServletException if a servlet error occurs
      */
- @Override
-public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-        throws IOException, ServletException {
-
-    response.setContentType("text/html;charset=UTF-8");
+    public void doFilter(ServletRequest request, ServletResponse response,
+            FilterChain chain)
+            throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
-//            
-//        String uri = req.getRequestURI();
-//        if(uri.endsWith(".jsp"))
-//        {
-//              res.sendRedirect(req.getContextPath() + "/login");
-//        }
+        req.setCharacterEncoding("UTF-8");
+        res.setCharacterEncoding("UTF-8");
+
+        String uri = req.getRequestURI();
         HttpSession session = req.getSession(false);
         TaiKhoan user = (session != null) ? (TaiKhoan) session.getAttribute("account") : null;
+
+// 1. Bỏ qua tài nguyên tĩnh
+        if (uri.contains("/css/") || uri.contains("/js/") || uri.contains("/img/") || uri.contains("/JSP/Admin/layout/")) {
+            chain.doFilter(request, response);
+            return;
+        }
+        if (uri.endsWith(".jsp")
+                && !uri.endsWith("/login.jsp")
+                && !uri.endsWith("/register.jsp")
+                && !uri.contains("/layout/")) { // bỏ qua các JSP layout
+            res.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+// 2. Bỏ qua login & register
+        if (uri.equals("/") || uri.endsWith("/login") || uri.endsWith("/login.jsp")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+// 3. Kiểm tra đăng nhập
         if (user == null) {
             res.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        chain.doFilter(request, response);
-}
 
+// 4. Cho phép đi tiếp
+        chain.doFilter(request, response);
+
+    }
 
     /**
      * Return the filter configuration object for this filter.
@@ -169,10 +188,10 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
         sb.append(")");
         return (sb.toString());
     }
-    
+
     private void sendProcessingError(Throwable t, ServletResponse response) {
         String stackTrace = getStackTrace(t);
-        
+
         if (stackTrace != null && !stackTrace.equals("")) {
             try {
                 response.setContentType("text/html");
@@ -199,7 +218,7 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
             }
         }
     }
-    
+
     public static String getStackTrace(Throwable t) {
         String stackTrace = null;
         try {
@@ -213,9 +232,9 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
         }
         return stackTrace;
     }
-    
+
     public void log(String msg) {
         filterConfig.getServletContext().log(msg);
     }
-    
+
 }

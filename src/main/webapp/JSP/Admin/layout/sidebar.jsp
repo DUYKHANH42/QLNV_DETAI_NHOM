@@ -33,7 +33,7 @@
             </a>
         </li>
         <li>
-            <a href="<%= request.getContextPath() %>/admin/salary.jsp">
+            <a href="salary" class="ajax-link">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Lương</span>
             </a>

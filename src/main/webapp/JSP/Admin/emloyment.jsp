@@ -115,7 +115,8 @@
                                 <nav aria-label="Page navigation">
                                     <ul class="pagination justify-content-center mb-0">
                                         <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                                            <a class="page-link ajax-link" href="emloyment?page=${currentPage - 1}">Previous</a>
+                                            <c:set var="cp" value="${currentPage != null ? currentPage : 1}" />
+                                            <a class="page-link ajax-link" href="emloyment?page=${cp - 1}">Previous</a>
                                         </li>
 
                                         <c:forEach var="p" begin="1" end="${totalPages}">

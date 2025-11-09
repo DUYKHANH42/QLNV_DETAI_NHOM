@@ -9,8 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="<%= request.getContextPath() %>/js/render.js"></script>
 <script src="<%= request.getContextPath() %>/js/index.js"></script>
 <script src="<%= request.getContextPath() %>/js/emloyment.js"></script>
 <script src="<%= request.getContextPath() %>/js/department.js"></script>
 <script src="<%= request.getContextPath() %>/js/checkin.js"></script>
+<script src="<%= request.getContextPath() %>/js/salary.js"></script>

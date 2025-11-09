@@ -17,6 +17,7 @@ function loadChamCongTable(page) {
         }
     });
 }
+
 function loadTableBySearch(page) {
     page = parseInt(page);
     if (!page || isNaN(page) || page < 1) {
@@ -49,7 +50,6 @@ function loadTableBySearch(page) {
 
 // Delegate event cho pagination
 $('.pagination-cc').on('click', 'a.page-link', function (e) {
-    e.preventDefault();
     let href = $(this).attr('href');
     let pageParam = new URLSearchParams(href.split('?')[1]).get('page');
 
@@ -253,7 +253,6 @@ $(document).ready(function () {
 
 $(document).ready(function () {
     $('#editAttendanceForm').on('submit', function (e) {
-        e.preventDefault();
 
         const formData = {
             id: $('#edit_id').val(),
@@ -382,14 +381,14 @@ $(document).on("click", ".btn-view-detail", function () {
             $("#detailAttendanceModal").modal("show");
         },
         error: function (xhr, status, err) {
-            console.error("Lỗi khi tải chi tiết:", err);
+//            console.error("Lỗi khi tải chi tiết:", err);
         }
     });
 });
 
 // Xuất Excel chi tiết
 $(document).on('click', '#btnExportExcelChiTietCC', function (e) {
-    e.preventDefault();
+  
     const maNV = $(this).data('id');
     if (!maNV) {
         Swal.fire({
@@ -445,7 +444,7 @@ $(document).on('click', '#btnExportPDFChiTietCC', function () {
 });
 
 $(document).on('click', '#btnXuatExcelCC', function (e) {
-    e.preventDefault();
+    
 
     // Lấy bộ lọc hiện tại
     const dateValue = $('#date').val();
