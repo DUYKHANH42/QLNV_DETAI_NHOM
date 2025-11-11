@@ -192,7 +192,7 @@ public class CheckinServlet extends HttpServlet {
                 try {
                     page = Integer.parseInt(currentPage);
                 } catch (NumberFormatException e) {
-                    page = 1;
+                
                 }
             }
 
@@ -211,13 +211,20 @@ public class CheckinServlet extends HttpServlet {
                 String tenPB = phongBanMap.get(String.valueOf(nv.getMaPB()));
                 nv.setTenPB(tenPB != null ? tenPB : "Chưa có");
             }
-            List<ChamCong> dsChamCong = ccdao.getAll();
+            String dateStr = request.getParameter("date");
+            LocalDate ngayLam = (dateStr != null && !dateStr.trim().isEmpty())
+                    ? LocalDate.parse(dateStr.trim())
+                    : LocalDate.now();
+
             Map<String, ChamCong> chamCongMap = new HashMap<>();
-            for (ChamCong cc : dsChamCong) {
-                if (!chamCongMap.containsKey(cc.getMaNV())) {
-                    chamCongMap.put(cc.getMaNV(), cc);
+            for (NhanVien nv : dsNhanVien) {
+                ChamCong cc = ccdao.getChamCongByDate(nv.getMaNV(), ngayLam); // bạn cần viết hàm này
+                if (cc != null) {
+                    chamCongMap.put(nv.getMaNV(), cc);
                 }
             }
+            request.setAttribute("chamCongMap", chamCongMap);
+
             Map<String, Integer> soNgayCongMap = new HashMap<>();
             java.util.Calendar cal = java.util.Calendar.getInstance();
             int thangHienTai = cal.get(java.util.Calendar.MONTH) + 1;
@@ -242,15 +249,14 @@ public class CheckinServlet extends HttpServlet {
 
             int tongNV = nvdao.countAllNhanVien();
             double tyLe = tongNV > 0 ? (daChamCong * 100.0 / tongNV) : 0;
-            String dateStr = request.getParameter("date");
             LocalDate today = LocalDate.now();
             request.setAttribute("today", today.toString());
-            Date ngayLam = Date.valueOf(today);
+            Date ngayLam2 = Date.valueOf(today);
             if (dateStr != null && !dateStr.trim().isEmpty()) {
-                ngayLam = java.sql.Date.valueOf(dateStr.trim());
+                ngayLam2 = java.sql.Date.valueOf(dateStr.trim());
             }
-            System.out.println(ngayLam.toString());
-            request.setAttribute("dateValue", ngayLam.toString());
+//            System.out.println(ngayLam.toString());
+            request.setAttribute("dateValue", ngayLam2.toString());
 //            System.out.println("ds chấm công: " + dsChamCong);
 //            System.out.println("số ngày công: " + soNgayCongMap);
             request.setAttribute("daChamCong", daChamCong);
@@ -260,7 +266,7 @@ public class CheckinServlet extends HttpServlet {
             request.setAttribute("soNgayCongMap", soNgayCongMap);
             request.setAttribute("chamCongMap", chamCongMap);
             request.setAttribute("dsNhanVien", dsNhanVien);
-            request.setAttribute("dsChamCong", dsChamCong);
+//            request.setAttribute("dsChamCong", dsChamCong);
             request.setAttribute("page", page);
             request.setAttribute("pageSize", pageSize);
             request.setAttribute("totalPages", totalPages);
@@ -432,6 +438,7 @@ public class CheckinServlet extends HttpServlet {
             boolean saved = false;
             for (String maNV : maNVList) {
                 saved |= ccdao.chamCongNhanVien(maNV, ngayLam);
+//                System.out.println(ccdao.daChamCong(maNV, ngayLam));
             }
 
             result.put("success", saved);
@@ -463,7 +470,7 @@ public class CheckinServlet extends HttpServlet {
             String maNV = json.get("id").getAsString();
             Date ngay = Date.valueOf(json.get("ngay").getAsString());
             String trangThai = json.get("trangthai").getAsString();
-
+            System.out.println("Trạng thái chỉnh sửa: " + trangThai);
             String gioVaoStr = json.has("gio_vao") ? json.get("gio_vao").getAsString() : null;
             String gioRaStr = json.has("gio_ra") ? json.get("gio_ra").getAsString() : null;
 
@@ -861,7 +868,7 @@ public class CheckinServlet extends HttpServlet {
             document.add(new Paragraph("Phòng ban: " + nv.getTenPB(), fontNormal));
             document.add(new Paragraph("Tháng: " + thang + "/" + nam, fontNormal));
             document.add(Chunk.NEWLINE);
-            PdfPTable table = new PdfPTable(6); 
+            PdfPTable table = new PdfPTable(6);
             table.setWidthPercentage(100);
             table.setWidths(new float[]{2, 3, 3, 3, 3, 4});
             String[] headers = {"Ngày", "Thứ", "Giờ Vào", "Giờ Ra", "Tổng Giờ", "Trạng Thái"};
@@ -903,7 +910,7 @@ public class CheckinServlet extends HttpServlet {
                             break;
                         case "leave":
                             trangThaiText = "Nghỉ phép";
-                            bgColor = new BaseColor(255, 255, 180); 
+                            bgColor = new BaseColor(255, 255, 180);
                             break;
                         default:
                             trangThaiText = isSunday ? "Ngày nghỉ" : "Vắng";
@@ -915,7 +922,7 @@ public class CheckinServlet extends HttpServlet {
                     bgColor = new BaseColor(255, 255, 180);
                 } else {
                     trangThaiText = "Vắng";
-                    bgColor = new BaseColor(255, 200, 200); 
+                    bgColor = new BaseColor(255, 200, 200);
                 }
                 PdfPCell cellNgay = new PdfPCell(new Phrase(String.format("%02d/%02d", day, thang), fontNormal));
                 cellNgay.setBackgroundColor(bgColor);

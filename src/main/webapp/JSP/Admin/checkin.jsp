@@ -268,7 +268,7 @@
 
                                 </ul>
                             </nav>
-                            <input type="hidden" id="currentPageChamCong" value="${page}">
+                            <input type="hidden" id="currentPageChamCong" value="${page != null ? page : 1}">
                         </div>
                     </div>
                 </div>

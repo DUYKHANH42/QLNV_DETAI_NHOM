@@ -72,36 +72,45 @@ public class ChamCongDAO {
     return false;
 }
 
-    public boolean chamCongNhanVien(String maNV, LocalDate ngayLam) {
-        try (Connection conn = DBConnection.getConnection()) {
-            // Kiểm tra đã có chưa
-            String checkSql = "SELECT COUNT(*) FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
-            try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
-                psCheck.setString(1, maNV);
-                psCheck.setDate(2, Date.valueOf(ngayLam));
-                try (ResultSet rs = psCheck.executeQuery()) {
-                    if (rs.next() && rs.getInt(1) > 0) {
-                        return false; // đã có => bỏ qua
+ public boolean chamCongNhanVien(String maNV, LocalDate ngayLam) {
+    try (Connection conn = DBConnection.getConnection()) {
+        // Kiểm tra đã có chưa
+        String checkSql = "SELECT COUNT(*) FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
+        try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+            psCheck.setString(1, maNV);
+            psCheck.setDate(2, Date.valueOf(ngayLam));
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    // Nếu đã có, cập nhật trạng thái thành "present"
+                    String updateSql = "UPDATE ChamCong SET TrangThai = ?, GioVao = COALESCE(GioVao, ?), GioRa = GioRa WHERE MaNV = ? AND NgayLam = ?";
+                    try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                        psUpdate.setString(1, "present");
+                        psUpdate.setTime(2, Time.valueOf(LocalTime.now())); // chỉ set GioVao nếu null
+                        psUpdate.setString(3, maNV);
+                        psUpdate.setDate(4, Date.valueOf(ngayLam));
+                        return psUpdate.executeUpdate() > 0;
                     }
                 }
             }
-
-            // Thêm mới
-            String insertSql = "INSERT INTO ChamCong(MaNV, NgayLam, TrangThai, GioVao, GioRa) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
-                psInsert.setString(1, maNV);
-                psInsert.setDate(2, Date.valueOf(ngayLam));
-                psInsert.setString(3, "Đi làm");
-                psInsert.setTime(4, Time.valueOf(LocalTime.now()));
-                psInsert.setTime(5, null);
-                return psInsert.executeUpdate() > 0;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return false;
+
+        // Nếu chưa có bản ghi, insert mới
+        String insertSql = "INSERT INTO ChamCong(MaNV, NgayLam, TrangThai, GioVao, GioRa) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+            psInsert.setString(1, maNV);
+            psInsert.setDate(2, Date.valueOf(ngayLam));
+            psInsert.setString(3, "present");
+            psInsert.setTime(4, Time.valueOf(LocalTime.now()));
+            psInsert.setTime(5, null);
+            return psInsert.executeUpdate() > 0;
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+    return false;
+}
+
 
   
 public boolean update(ChamCong cc) {
@@ -384,7 +393,31 @@ public boolean update(ChamCong cc) {
     }
 
     return list;
+}public ChamCong getChamCongByDate(String maNV, LocalDate ngayLam) {
+    String sql = "SELECT * FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, maNV);
+        ps.setDate(2, Date.valueOf(ngayLam));
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                ChamCong cc = new ChamCong();
+                cc.setMaCC(rs.getInt("MaCC"));
+                cc.setMaNV(rs.getString("MaNV"));
+                cc.setNgayLam(rs.getDate("NgayLam"));
+                cc.setGioVao(rs.getTime("GioVao"));
+                cc.setGioRa(rs.getTime("GioRa"));
+                cc.setTrangThai(rs.getString("TrangThai"));
+                return cc;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
 }
+
+    
 
     public double tinhSoGioLam(Time gioVao, Time gioRa) {
     if (gioVao == null || gioRa == null) {

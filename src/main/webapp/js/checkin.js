@@ -1,28 +1,29 @@
+function parsePage(page) {
+    page = parseInt(page, 10);
+    if (isNaN(page) || page < 1) page = 1;
+    return page;
+}
+
 function loadChamCongTable(page) {
-    page = parseInt(page);
-    if (!page || isNaN(page) || page < 1) {
-        page = parseInt($('#currentPageChamCong').val()) || 1;
-    }
+    page = parsePage(page);
+
     $.ajax({
         url: 'checkin?action=list&page=' + page,
         method: 'GET',
         headers: {'X-Requested-With': 'XMLHttpRequest'},
         success: function (data) {
-            // Lấy tbody + pagination từ dữ liệu trả về
             const dom = $('<div>').html(data);
             $('#tableChamCong tbody').html(dom.find('#tableChamCong tbody').html());
             $('.pagination-cc').html(dom.find('.pagination-cc').html());
-            const newPage = dom.find('#currentPageChamCong').val();
+
+            let newPage = parsePage(dom.find('#currentPageChamCong').val());
             $('#currentPageChamCong').val(newPage);
         }
     });
 }
 
 function loadTableBySearch(page) {
-    page = parseInt(page);
-    if (!page || isNaN(page) || page < 1) {
-        page = parseInt($('#currentPageChamCong').val()) || 1;
-    }
+    page = parsePage(page);
 
     const dateValue = $('input[name="date"]').val();
     const phongban = $('select[name="phongban"]').val();
@@ -31,22 +32,18 @@ function loadTableBySearch(page) {
     $.ajax({
         url: 'checkin',
         method: 'GET',
-        data: {
-            action: 'search',
-            page: page,
-            date: dateValue,
-            phongban: phongban,
-            tenNV: tenNV
-        },
+        data: {action: 'search', page: page, date: dateValue, phongban, tenNV},
         headers: {'X-Requested-With': 'XMLHttpRequest'},
         success: function (data) {
             const dom = $('<div>').html(data);
             $('#tableChamCong tbody').html(dom.find('#tableChamCong tbody').html());
             $('.pagination-cc').html(dom.find('.pagination-cc').html());
-            $('#currentPageChamCong').val(dom.find('#currentPageChamCong').val());
+            let newPage = parsePage(dom.find('#currentPageChamCong').val());
+            $('#currentPageChamCong').val(newPage);
         }
     });
 }
+
 
 // Delegate event cho pagination
 $('.pagination-cc').on('click', 'a.page-link', function (e) {
@@ -107,7 +104,6 @@ $('#select-all').on('change', function () {
         const date = $('input[name="date"]').val();
         const phongban = $('select[name="phongban"]').val();
         const tenNV = $('input[name="tenNV"]').val();
-        r
         $.ajax({
             url: 'checkin?action=searchAll',
             method: 'GET',
@@ -171,7 +167,8 @@ $btnChamCong.on('click', function () {
             window.selectedEmployees = [];
             updateToolbar();
 
-            const currentPage = $('#currentPageChamCong').val() || 1;
+            const currentPage = $('#currentPageChamCong').val();
+            console.log(currentPage)
             if (dateValue || $('select[name="phongban"]').val() || $('input[name="tenNV"]').val()) {
                 loadTableBySearch(currentPage);
             } else {
@@ -188,7 +185,6 @@ $btnChamCong.on('click', function () {
         }
     });
 });
-
 // Bắt sự kiện click nút sửa
 $(document).ready(function () {
     $table.on('click', '.btn-editChamCong', function () {
@@ -204,6 +200,7 @@ $(document).ready(function () {
         switch (textTrangThai) {
             case 'Đi làm':
                 trangThaiValue = 'present';
+               
                 break;
             case 'Đi muộn':
                 trangThaiValue = 'late';

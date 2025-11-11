@@ -658,7 +658,6 @@ public class SalarySevlet extends HttpServlet {
         document.open();
 
         String fontPath = request.getServletContext().getRealPath("/fonts/UTM Times.ttf");
-        // Font Times Việt hóa
         com.itextpdf.text.pdf.BaseFont bf = com.itextpdf.text.pdf.BaseFont.createFont(
               fontPath,
                 com.itextpdf.text.pdf.BaseFont.IDENTITY_H,
@@ -667,7 +666,6 @@ public class SalarySevlet extends HttpServlet {
         com.itextpdf.text.Font fontNormal = new com.itextpdf.text.Font(bf, 12);
         com.itextpdf.text.Font fontBold = new com.itextpdf.text.Font(bf, 12, com.itextpdf.text.Font.BOLD);
 
-        // Thông tin nhân viên
         document.add(new com.itextpdf.text.Paragraph("THÔNG TIN NHÂN VIÊN", fontBold));
         document.add(new com.itextpdf.text.Paragraph("Mã NV: " + nv.getMaNV(), fontNormal));
         document.add(new com.itextpdf.text.Paragraph("Họ Tên: " + nv.getHoTen(), fontNormal));
@@ -675,20 +673,16 @@ public class SalarySevlet extends HttpServlet {
         document.add(new com.itextpdf.text.Paragraph("Chức Vụ: " + nv.getChucVu(), fontNormal));
         document.add(com.itextpdf.text.Chunk.NEWLINE);
 
-        // Chi tiết lương
         document.add(new com.itextpdf.text.Paragraph("CHI TIẾT LƯƠNG", fontBold));
         document.add(new com.itextpdf.text.Paragraph("Tháng: " + String.format("%02d/%04d", l.getThang(), l.getNam()), fontNormal));
         document.add(new com.itextpdf.text.Paragraph("Trạng Thái: " + (l.getTrangThai() != null && l.getTrangThai() == TrangThaiLuong.Paid ? "Đã thanh toán" : "Chờ thanh toán"), fontNormal));
         document.add(com.itextpdf.text.Chunk.NEWLINE);
 
-        // Bảng tính lương
         com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(2);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10f);
         table.setSpacingAfter(10f);
         table.setWidths(new float[]{3f, 2f});
-
-        // Header
         com.itextpdf.text.pdf.PdfPCell cell;
         cell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Paragraph("Khoản Mục", fontBold));
         cell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
@@ -700,7 +694,6 @@ public class SalarySevlet extends HttpServlet {
         cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         table.addCell(cell);
 
-        // Dữ liệu
         String[] labels = {"Lương cơ bản", "Tổng phụ cấp", "Thưởng", "Phạt", "Tổng tăng ca", "Tổng khấu trừ", "Lương Thực Nhận"};
         double[] values = {
             l.getLuongCoBan(),
