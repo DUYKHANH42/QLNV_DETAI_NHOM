@@ -178,7 +178,7 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Số Điện Thoại</label>
-                                        <input type="text" class="form-control" name="sdt">
+                                        <input type="number" class="form-control" name="sdt">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Tên Đăng Nhập</label>
@@ -198,10 +198,20 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Lương Cơ Bản</label>
+                                        <input type="number" class="form-control" name="luongcb" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Hệ Số Lương</label>
+                                        <input type="number" class="form-control" name="hsluong">
+                                    </div>
+                                </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                <button type="submit" class="btn btn-primary">Lưu</button>
+                                <button type="button" class="btn btn-primary" id="btnSaveEmployee">Lưu</button>
                             </div>
                         </form>
                     </div>
@@ -255,7 +265,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="edit-chucvu">Chức Vụ <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="edit-chucvu" name="chucVu" required value="Developer">
+                                            <input type="text" class="form-control" id="edit-chucvu" name="chucVu" required value="">
                                         </div>
                                     </div>
                                 </div>
@@ -264,14 +274,14 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="edit-email">Email <span class="text-danger">*</span></label>
-                                            <input type="email" class="form-control" id="edit-email" name="email" required value="an.nguyen@company.com">
+                                            <input type="email" class="form-control" id="edit-email" name="email" required value="">
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="edit-sdt">Số Điện Thoại</label>
-                                            <input type="tel" class="form-control" id="edit-sdt" name="sdt" value="0901234567">
+                                            <input type="tel" class="form-control" id="edit-sdt" name="sdt" value="">
                                         </div>
                                     </div>
                                 </div>
@@ -282,6 +292,16 @@
                                         <option value="Đang làm" selected>Đang Làm</option>
                                         <option value="Nghỉ việc">Đã nghỉ việc</option>
                                     </select>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Lương Cơ Bản</label>
+                                        <input type="number" class="form-control" id="edit-luongcb" name="luongcb" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Hệ Số Lương</label>
+                                        <input type="number" class="form-control" id="edit-hsluong" name="hsluong">
+                                    </div>
                                 </div>
                             </div>
 

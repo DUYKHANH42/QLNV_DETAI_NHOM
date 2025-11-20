@@ -1,43 +1,36 @@
-$(document).ready(function () {
-    $(document).on('submit', '#formAddEmployee', function (e) {
+$(document).on('click', '#btnSaveEmployee', function () {
+    console.log("chạy đc");
+    const form = $('#formAddEmployee');
 
-
-        const form = $(this);
-
-        $.ajax({
-            url: 'emloyment?action=add', // servlet
-            type: 'POST',
-            data: form.serialize(),
-            dataType: 'json',
-            success: function (res) {
-                Swal.fire({
-                    title: res.status === 'success' ? 'Thành công' : 'Lỗi',
-                    text: res.message,
-                    icon: res.status === 'success' ? 'success' : 'error',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    if (res.status === 'success') {
-                        // Ẩn modal
-                        $('#modalAddEmployee').modal('hide');
-                        // Thêm hàng mới vào bảng
-                        // reset form
-                        form[0].reset();
-                        loadTable();
-                    }
-                });
-            },
-            error: function (err) {
-                console.error(err);
-                Swal.fire({
-                    title: 'Lỗi',
-                    text: 'Không thể kết nối tới server!',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            }
-        });
+    $.ajax({
+        url: 'emloyment?action=add',
+        type: 'POST',
+        data: form.serialize(),
+        dataType: 'json',
+        success: function (res) {
+            Swal.fire({
+                title: res.status === 'success' ? 'Thành công' : 'Lỗi',
+                text: res.message,
+                icon: res.status === 'success' ? 'success' : 'error',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                if (res.status === 'success') {
+                    $('#modalAddEmployee').modal('hide');
+                    form[0].reset();
+                    loadTable();
+                }
+            });
+        },
+        error: function () {
+            Swal.fire({
+                title: 'Lỗi',
+                text: 'Không thể kết nối tới server!',
+                icon: 'error'
+            });
+        }
     });
 });
+
 function deleteNhanVien(id) {
     Swal.fire({
         title: 'Xác nhận xóa?',
@@ -76,6 +69,8 @@ function deleteNhanVien(id) {
         }
     });
 }
+
+
 $(document).on('click', '.btn-edit', function () {
     const maNV = $(this).data('id');
 
@@ -96,7 +91,8 @@ $(document).on('click', '.btn-edit', function () {
                 $('#edit-email').val(nv.email);
                 $('#edit-sdt').val(nv.sdt);
                 $('#edit-trangthai').val(nv.trangThai);
-
+                $('#edit-luongcb').val(nv.luongCoBan);
+                $('#edit-hsluong').val(nv.heSoLuong);
                 // Hiển thị modal
                 $('#editEmployeeModal').modal('show');
             } else {

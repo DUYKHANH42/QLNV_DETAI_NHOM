@@ -121,7 +121,7 @@ public class EmloymentServlet extends HttpServlet {
 //            response.sendRedirect(request.getContextPath() + "/login");
 //            return;
 //        }     
-processRequest(request, response);
+        processRequest(request, response);
     }
 
     /**
@@ -209,36 +209,46 @@ processRequest(request, response);
             String chucVu = request.getParameter("chucvu");
             String email = request.getParameter("email");
             String sdt = request.getParameter("sdt");
+            String luongCbStr = request.getParameter("luongcb");
+            String heSoLuongStr = request.getParameter("hsluong");
 
+            java.util.Date today = new java.util.Date();
+            java.sql.Date ngayVaoLam = new java.sql.Date(today.getTime());
+            double luongCb = (luongCbStr != null && !luongCbStr.isEmpty()) ? Double.parseDouble(luongCbStr) : 0.0;
+            double heSoLuong = (heSoLuongStr != null && !heSoLuongStr.isEmpty()) ? Double.parseDouble(heSoLuongStr) : 0.0;
+            System.out.println("luongcb: " + luongCb);
+            System.out.println("hsluong: " + heSoLuong);
             if (tenDangNhap == null || password == null || hoTen == null) {
                 map.put("status", "error");
                 map.put("message", "Vui lòng nhập đầy đủ thông tin!");
                 response.getWriter().write(new Gson().toJson(map));
                 return;
             }
-
-            // 1️⃣ Tạo nhân viên
             NhanVien nv = new NhanVien();
             nv.setHoTen(hoTen);
             nv.setMaPB(maPB);
             nv.setChucVu(chucVu);
             nv.setEmail(email);
             nv.setSDT(sdt);
+            nv.setLuongCoBan(luongCb);
+            nv.setHeSoLuong(heSoLuong);
+            nv.setNgayVaoLam(ngayVaoLam);
             int maNV = nvdao.insert(nv);
 
             if (maNV == -1) {
                 throw new Exception("Không thể thêm nhân viên!");
             }
-
-            // 2️⃣ Tạo tài khoản
             TaiKhoan tk = new TaiKhoan();
             tk.setMaNV(maNV);
             tk.setTenDangNhap(tenDangNhap);
             tk.setMatKhau(password);
             tk.setVaiTro(vaiTro);
-            tkdao.insert(tk);
-
-            // 3️⃣ Lấy thông tin nhân viên đầy đủ
+            if (!tkdao.insert(tk)) {
+                map.put("status", "error");
+                map.put("message", "Tên đăng nhập đã tồn tại!");
+                response.getWriter().write(new Gson().toJson(map));
+                return;
+            }
             NhanVien nvMoi = nvdao.getById(maNV);
             PhongBan pb = pbdao.getByID(nvMoi.getMaPB());
 
@@ -251,7 +261,6 @@ processRequest(request, response);
             nvJson.put("email", nvMoi.getEmail());
             nvJson.put("sdt", nvMoi.getSDT());
             nvJson.put("trangThai", nvMoi.getTrangThai());
-
             map.put("status", "success");
             map.put("message", "Thêm nhân viên thành công!");
             map.put("nhanVien", nvJson);
@@ -271,10 +280,10 @@ processRequest(request, response);
 
         try {
             String maNV = request.getParameter("id");
-            boolean success = nvdao.delete(maNV);
+            boolean success = tkdao.delete(maNV);
 
             if (success) {
-                tkdao.delete(maNV);
+                nvdao.delete(maNV);
                 map.put("status", "success");
                 map.put("message", "Xóa nhân viên thành công!");
             } else {
@@ -312,13 +321,23 @@ processRequest(request, response);
             if (nv != null) {
                 String json = String.format(
                         "{\"status\":\"success\",\"data\":{"
-                        + "\"maNV\":\"%s\",\"hoTen\":\"%s\",\"maPB\":\"%s\",\"chucVu\":\"%s\","
-                        + "\"email\":\"%s\",\"sdt\":\"%s\",\"trangThai\":\"%s\"}}",
+                        + "\"maNV\":\"%s\","
+                        + "\"hoTen\":\"%s\","
+                        + "\"maPB\":\"%s\","
+                        + "\"chucVu\":\"%s\","
+                        + "\"email\":\"%s\","
+                        + "\"sdt\":\"%s\","
+                        + "\"trangThai\":\"%s\","
+                        + "\"luongCoBan\":%f,"
+                        + "\"heSoLuong\":%f"
+                        + "}}",
                         nv.getMaNV(), nv.getHoTen(), nv.getMaPB(), nv.getChucVu(),
-                        nv.getEmail(), nv.getSDT(), nv.getTrangThai()
+                        nv.getEmail(), nv.getSDT(), nv.getTrangThai(),
+                        nv.getLuongCoBan(), nv.getHeSoLuong()
                 );
                 out.print(json);
-            } else {
+            } 
+            else {
                 out.print("{\"status\":\"error\",\"message\":\"Không tìm thấy nhân viên!\"}");
             }
         } catch (Exception e) {
@@ -343,7 +362,10 @@ processRequest(request, response);
             String email = request.getParameter("email");
             String sdt = request.getParameter("sdt");
             String trangThai = request.getParameter("trangThai");
-
+            String luongCbStr = request.getParameter("luongcb");
+            String heSoLuongStr = request.getParameter("hsluong");
+            double luongCb = (luongCbStr != null && !luongCbStr.isEmpty()) ? Double.parseDouble(luongCbStr) : 0.0;
+            double heSoLuong = (heSoLuongStr != null && !heSoLuongStr.isEmpty()) ? Double.parseDouble(heSoLuongStr) : 0.0;
             NhanVien nv = nvdao.getById(maNV);
             if (nv != null) {
                 nv.setHoTen(hoTen);
@@ -352,6 +374,8 @@ processRequest(request, response);
                 nv.setEmail(email);
                 nv.setSDT(sdt);
                 nv.setTrangThai(trangThai);
+                nv.setLuongCoBan(luongCb);
+                nv.setHeSoLuong(heSoLuong);
 
                 boolean success = nvdao.update(nv);
                 if (success) {

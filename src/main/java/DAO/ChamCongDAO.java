@@ -12,6 +12,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,117 +49,139 @@ public class ChamCongDAO {
         return list;
     }
 
-   public boolean insert(ChamCong cc) {
-    String sql = "INSERT INTO CHAMCONG(MaNV, NgayLam, TrangThai, GioVao, GioRa, SoGioLam) "
-               + "VALUES (?, ?, ?, ?, ?, ?)";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+    public boolean insert(ChamCong cc) {
+        String sql = "INSERT INTO CHAMCONG(MaNV, NgayLam, TrangThai, GioVao, GioRa, SoGioLam) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
-        ps.setString(1, cc.getMaNV());
-        ps.setDate(2, new java.sql.Date(cc.getNgayLam().getTime()));
-        ps.setString(3, cc.getTrangThai());
-        ps.setTime(4, cc.getGioVao());
-        ps.setTime(5, cc.getGioRa());
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        // Tính số giờ làm
-        double soGioLam = tinhSoGioLam(cc.getGioVao(), cc.getGioRa());
-        ps.setBigDecimal(6, BigDecimal.valueOf(soGioLam));
+            ps.setString(1, cc.getMaNV());
+            ps.setDate(2, new java.sql.Date(cc.getNgayLam().getTime()));
+            ps.setString(3, cc.getTrangThai());
+            ps.setTime(4, cc.getGioVao());
+            ps.setTime(5, cc.getGioRa());
 
-        return ps.executeUpdate() > 0;
+            double soGioLam = tinhSoGioLam(cc.getGioVao(), cc.getGioRa());
+            ps.setBigDecimal(6, BigDecimal.valueOf(soGioLam));
 
-    } catch (SQLException e) {
-        e.printStackTrace();
+            boolean inserted = ps.executeUpdate() > 0;
+
+            if (inserted) {
+                // Gọi stored procedure tính lương tự động
+                try (CallableStatement cs = conn.prepareCall("{call sp_CapNhatLuongKhiChamCong(?, ?, ?)}")) {
+                    cs.setString(1, cc.getMaNV());
+                    cs.setInt(2, getMonth(cc.getNgayLam())); // Tháng
+                    cs.setInt(3, getYear(cc.getNgayLam()));  // Năm
+                    cs.execute();
+                }
+            }
+
+            return inserted;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
-    return false;
-}
 
- public boolean chamCongNhanVien(String maNV, LocalDate ngayLam) {
-    try (Connection conn = DBConnection.getConnection()) {
-        // Kiểm tra đã có chưa
-        String checkSql = "SELECT COUNT(*) FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
-        try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
-            psCheck.setString(1, maNV);
-            psCheck.setDate(2, Date.valueOf(ngayLam));
-            try (ResultSet rs = psCheck.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
-                    // Nếu đã có, cập nhật trạng thái thành "present"
-                    String updateSql = "UPDATE ChamCong SET TrangThai = ?, GioVao = COALESCE(GioVao, ?), GioRa = GioRa WHERE MaNV = ? AND NgayLam = ?";
-                    try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
-                        psUpdate.setString(1, "present");
-                        psUpdate.setTime(2, Time.valueOf(LocalTime.now())); // chỉ set GioVao nếu null
-                        psUpdate.setString(3, maNV);
-                        psUpdate.setDate(4, Date.valueOf(ngayLam));
-                        return psUpdate.executeUpdate() > 0;
+// Hàm tiện ích
+    private int getMonth(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(Calendar.MONTH) + 1;
+    }
+
+    private int getYear(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(Calendar.YEAR);
+    }
+
+    public boolean chamCongNhanVien(String maNV, LocalDate ngayLam) {
+        try (Connection conn = DBConnection.getConnection()) {
+            // Kiểm tra đã có chưa
+            String checkSql = "SELECT COUNT(*) FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
+            try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+                psCheck.setString(1, maNV);
+                psCheck.setDate(2, Date.valueOf(ngayLam));
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        // Nếu đã có, cập nhật trạng thái thành "present"
+                        String updateSql = "UPDATE ChamCong SET TrangThai = ?, GioVao = COALESCE(GioVao, ?), GioRa = GioRa WHERE MaNV = ? AND NgayLam = ?";
+                        try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                            psUpdate.setString(1, "present");
+                            psUpdate.setTime(2, Time.valueOf(LocalTime.now())); // chỉ set GioVao nếu null
+                            psUpdate.setString(3, maNV);
+                            psUpdate.setDate(4, Date.valueOf(ngayLam));
+                            return psUpdate.executeUpdate() > 0;
+                        }
                     }
                 }
             }
+
+            // Nếu chưa có bản ghi, insert mới
+            String insertSql = "INSERT INTO ChamCong(MaNV, NgayLam, TrangThai, GioVao, GioRa) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+                psInsert.setString(1, maNV);
+                psInsert.setDate(2, Date.valueOf(ngayLam));
+                psInsert.setString(3, "present");
+                psInsert.setTime(4, Time.valueOf(LocalTime.now()));
+                psInsert.setTime(5, null);
+                return psInsert.executeUpdate() > 0;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return false;
+    }
 
-        // Nếu chưa có bản ghi, insert mới
-        String insertSql = "INSERT INTO ChamCong(MaNV, NgayLam, TrangThai, GioVao, GioRa) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
-            psInsert.setString(1, maNV);
-            psInsert.setDate(2, Date.valueOf(ngayLam));
-            psInsert.setString(3, "present");
-            psInsert.setTime(4, Time.valueOf(LocalTime.now()));
-            psInsert.setTime(5, null);
-            return psInsert.executeUpdate() > 0;
+    public boolean update(ChamCong cc) {
+        String sql = "UPDATE CHAMCONG SET NgayLam=?, TrangThai=?, GioVao=?, GioRa=?, SoGioLam=? "
+                + "WHERE MaCC=?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, new java.sql.Date(cc.getNgayLam().getTime()));
+            ps.setString(2, cc.getTrangThai());
+            ps.setTime(3, cc.getGioVao());
+            ps.setTime(4, cc.getGioRa());
+
+            // Tính số giờ làm
+            double soGioLam = tinhSoGioLam(cc.getGioVao(), cc.getGioRa());
+            ps.setBigDecimal(5, BigDecimal.valueOf(soGioLam));
+
+            ps.setInt(6, cc.getMaCC());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return false;
     }
-    return false;
-}
 
-
-  
-public boolean update(ChamCong cc) {
-    String sql = "UPDATE CHAMCONG SET NgayLam=?, TrangThai=?, GioVao=?, GioRa=?, SoGioLam=? "
-               + "WHERE MaCC=?";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-
-        ps.setDate(1, new java.sql.Date(cc.getNgayLam().getTime()));
-        ps.setString(2, cc.getTrangThai());
-        ps.setTime(3, cc.getGioVao());
-        ps.setTime(4, cc.getGioRa());
-
-        // Tính số giờ làm
-        double soGioLam = tinhSoGioLam(cc.getGioVao(), cc.getGioRa());
-        ps.setBigDecimal(5, BigDecimal.valueOf(soGioLam));
-
-        ps.setInt(6, cc.getMaCC());
-
-        return ps.executeUpdate() > 0;
-
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return false;
-}
     public ChamCong getByMaNVAndNgay(String maNV, Date ngay) {
-    String sql = "SELECT * FROM CHAMCONG WHERE MaNV=? AND NgayLam=?";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, maNV);
-        ps.setDate(2, ngay);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            ChamCong cc = new ChamCong();
-            cc.setMaCC(rs.getInt("MaCC"));
-            cc.setMaNV(rs.getString("MaNV"));
-            cc.setNgayLam(rs.getDate("NgayLam"));
-            cc.setTrangThai(rs.getString("TrangThai"));
-            cc.setGioVao(rs.getTime("GioVao"));
-            cc.setGioRa(rs.getTime("GioRa"));
-            return cc;
+        String sql = "SELECT * FROM CHAMCONG WHERE MaNV=? AND NgayLam=?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maNV);
+            ps.setDate(2, ngay);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                ChamCong cc = new ChamCong();
+                cc.setMaCC(rs.getInt("MaCC"));
+                cc.setMaNV(rs.getString("MaNV"));
+                cc.setNgayLam(rs.getDate("NgayLam"));
+                cc.setTrangThai(rs.getString("TrangThai"));
+                cc.setGioVao(rs.getTime("GioVao"));
+                cc.setGioRa(rs.getTime("GioRa"));
+                return cc;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
+
     public boolean delete(int maCC) {
         String sql = "DELETE FROM CHAMCONG WHERE MaCC=?";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -362,68 +385,67 @@ public boolean update(ChamCong cc) {
 
         return soVangMatTheoNgay;
     }
+
     public List<ChamCong> getChamCongTheoThang(String maNV, int thang, int nam) {
-    List<ChamCong> list = new ArrayList<>();
-    String sql = "SELECT MaCC, MaNV, NgayLam, TrangThai, GioVao, GioRa, SoGioLam "
-               + "FROM ChamCong "
-               + "WHERE MaNV = ? AND MONTH(NgayLam) = ? AND YEAR(NgayLam) = ? "
-               + "ORDER BY NgayLam ASC";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        List<ChamCong> list = new ArrayList<>();
+        String sql = "SELECT MaCC, MaNV, NgayLam, TrangThai, GioVao, GioRa, SoGioLam "
+                + "FROM ChamCong "
+                + "WHERE MaNV = ? AND MONTH(NgayLam) = ? AND YEAR(NgayLam) = ? "
+                + "ORDER BY NgayLam ASC";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setString(1, maNV);
-        ps.setInt(2, thang);
-        ps.setInt(3, nam);
+            ps.setString(1, maNV);
+            ps.setInt(2, thang);
+            ps.setInt(3, nam);
 
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            ChamCong cc = new ChamCong();
-            cc.setMaCC(rs.getInt("MaCC"));
-            cc.setMaNV(rs.getString("MaNV"));
-            cc.setNgayLam(rs.getDate("NgayLam"));
-            cc.setTrangThai(rs.getString("TrangThai"));
-            cc.setGioVao(rs.getTime("GioVao"));
-            cc.setGioRa(rs.getTime("GioRa"));
-            cc.setSogioLam(rs.getBigDecimal("SoGioLam"));
-            list.add(cc);
-        }
-
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-
-    return list;
-}public ChamCong getChamCongByDate(String maNV, LocalDate ngayLam) {
-    String sql = "SELECT * FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, maNV);
-        ps.setDate(2, Date.valueOf(ngayLam));
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
                 ChamCong cc = new ChamCong();
                 cc.setMaCC(rs.getInt("MaCC"));
                 cc.setMaNV(rs.getString("MaNV"));
                 cc.setNgayLam(rs.getDate("NgayLam"));
+                cc.setTrangThai(rs.getString("TrangThai"));
                 cc.setGioVao(rs.getTime("GioVao"));
                 cc.setGioRa(rs.getTime("GioRa"));
-                cc.setTrangThai(rs.getString("TrangThai"));
-                return cc;
+                cc.setSogioLam(rs.getBigDecimal("SoGioLam"));
+                list.add(cc);
             }
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return null;
-}
 
-    
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public ChamCong getChamCongByDate(String maNV, LocalDate ngayLam) {
+        String sql = "SELECT * FROM ChamCong WHERE MaNV = ? AND NgayLam = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maNV);
+            ps.setDate(2, Date.valueOf(ngayLam));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ChamCong cc = new ChamCong();
+                    cc.setMaCC(rs.getInt("MaCC"));
+                    cc.setMaNV(rs.getString("MaNV"));
+                    cc.setNgayLam(rs.getDate("NgayLam"));
+                    cc.setGioVao(rs.getTime("GioVao"));
+                    cc.setGioRa(rs.getTime("GioRa"));
+                    cc.setTrangThai(rs.getString("TrangThai"));
+                    return cc;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public double tinhSoGioLam(Time gioVao, Time gioRa) {
-    if (gioVao == null || gioRa == null) {
-        return 0;
+        if (gioVao == null || gioRa == null) {
+            return 0;
+        }
+        long diffMillis = gioRa.getTime() - gioVao.getTime() - 3600000;
+        return diffMillis / 3600000.0;
     }
-    long diffMillis = gioRa.getTime() - gioVao.getTime()-3600000;
-    return diffMillis / 3600000.0;
-}
 }

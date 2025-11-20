@@ -20,7 +20,7 @@ $(document).ready(function () {
                     if (res.status === 'success') {
                         $('#addDepartmentModal').modal('hide');
                         form[0].reset();
-                        loadPhongBan(); // load lại toàn bộ danh sách
+                        loadPhongBan(); 
                     }
                 });
             },

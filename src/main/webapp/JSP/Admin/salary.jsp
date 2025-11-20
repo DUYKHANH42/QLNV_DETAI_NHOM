@@ -166,10 +166,18 @@
                                         <td class="text-nowrap">${l.hoTen}</td>
                                         <td class="text-nowrap">${l.phongBan}</td>
                                         <td class="text-nowrap">${l.chucVu}</td>
-                                        <td><fmt:formatNumber value="${l.luongCoBan}" type="number" groupingUsed="true" /></td>
-                                        <td><fmt:formatNumber value="${l.phuCap}" type="number" groupingUsed="true" /></td>
-                                        <td><fmt:formatNumber value="${l.phuCap}" type="number" groupingUsed="true" /></td>
-                                        <td><fmt:formatNumber value="${l.tongLuong}" type="number" groupingUsed="true" /></td>
+                                        <td>
+                                            <fmt:formatNumber value="${l.luongCoBan.longValue()}" type="number" groupingUsed="true" /> đ
+                                        </td>
+                                        <td>
+                                            <fmt:formatNumber value="${l.phuCap.longValue()}" type="number" groupingUsed="true" /> đ
+                                        </td>
+                                        <td>
+                                            <fmt:formatNumber value="${l.phuCap.longValue()}" type="number" groupingUsed="true" /> đ
+                                        </td>
+                                        <td>
+                                            <fmt:formatNumber value="${l.tongLuong.longValue()}" type="number" groupingUsed="true" /> đ
+                                        </td>
                                         <td>
                                             <c:choose>
                                                 <c:when test="${l.trangThai eq 'Paid'}">
@@ -190,7 +198,7 @@
                                                         data-toggle="modal" data-target="#editSalaryModal">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                                <!--<button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>-->
                                             </div>
                                         </td>
                                     </tr>

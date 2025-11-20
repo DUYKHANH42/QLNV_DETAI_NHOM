@@ -100,8 +100,8 @@ public class NhanVienDAO {
     }
 
     public int insert(NhanVien nv) {
-        String sql = "INSERT INTO NhanVien(HoTen, NgaySinh, GioiTinh, SDT, DiaChi, ChucVu, NgayVaoLam, MaPB, TrangThai, Email) "
-                + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO NhanVien(HoTen, NgaySinh, GioiTinh, SDT, DiaChi, ChucVu, NgayVaoLam, MaPB, TrangThai, Email, LuongCoBan, HeSoLuong) "
+                + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -116,6 +116,8 @@ public class NhanVienDAO {
             ps.setString(index++, nv.getMaPB());
             ps.setString(index++, nv.getTrangThai() != null ? nv.getTrangThai() : "Đang làm");
             ps.setString(index++, nv.getEmail());
+            ps.setDouble(index++, nv.getLuongCoBan());
+            ps.setDouble(index++, nv.getHeSoLuong());
 
             ps.executeUpdate();
 
@@ -133,11 +135,25 @@ public class NhanVienDAO {
     }
 
     public boolean update(NhanVien nv) {
-        String sql = "UPDATE NhanVien SET HoTen=?, NgaySinh=?, GioiTinh=?, SDT=?, DiaChi=?, ChucVu=?, NgayVaoLam=?, MaPB=?, TrangThai=?, Email=? "
+        String sql = "UPDATE NhanVien SET HoTen=?, NgaySinh=?, GioiTinh=?, SDT=?, DiaChi=?, ChucVu=?, NgayVaoLam=?, MaPB=?, TrangThai=?, Email=?, LuongCoBan=?, HeSoLuong=? "
                 + "WHERE MaNV=?";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            setPreparedStatementFromNhanVien(ps, nv, true);
+            int index = 1;
+            ps.setString(index++, nv.getHoTen());
+            ps.setDate(index++, nv.getNgaySinh() != null ? new java.sql.Date(nv.getNgaySinh().getTime()) : null);
+            ps.setString(index++, nv.getGioiTinh());
+            ps.setString(index++, nv.getSDT());
+            ps.setString(index++, nv.getDiaChi());
+            ps.setString(index++, nv.getChucVu());
+            ps.setDate(index++, nv.getNgayVaoLam() != null ? new java.sql.Date(nv.getNgayVaoLam().getTime()) : null);
+            ps.setString(index++, nv.getMaPB());
+            ps.setString(index++, nv.getTrangThai() != null ? nv.getTrangThai() : "Đang làm");
+            ps.setString(index++, nv.getEmail());
+            ps.setDouble(index++, nv.getLuongCoBan());
+            ps.setDouble(index++, nv.getHeSoLuong());
+            ps.setInt(index++, Integer.parseInt(nv.getMaNV()));
+
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
@@ -227,27 +243,26 @@ public class NhanVienDAO {
 
         return list;
     }
-public List<NhanVien> getByPhongBan(String maPB) {
-    List<NhanVien> list = new ArrayList<>();
-    String sql = "SELECT nv.*, pb.TenPB FROM NhanVien nv LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB WHERE nv.MaPB = ?";
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, maPB);
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            NhanVien nv = new NhanVien();
-            nv.setMaNV(rs.getString("MaNV"));
-            nv.setHoTen(rs.getString("HoTen"));
-            nv.setMaPB(rs.getString("MaPB"));
-            nv.setTenPB(rs.getString("TenPB"));
-            list.add(nv);
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return list;
-}
 
+    public List<NhanVien> getByPhongBan(String maPB) {
+        List<NhanVien> list = new ArrayList<>();
+        String sql = "SELECT nv.*, pb.TenPB FROM NhanVien nv LEFT JOIN PhongBan pb ON nv.MaPB = pb.MaPB WHERE nv.MaPB = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maPB);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                NhanVien nv = new NhanVien();
+                nv.setMaNV(rs.getString("MaNV"));
+                nv.setHoTen(rs.getString("HoTen"));
+                nv.setMaPB(rs.getString("MaPB"));
+                nv.setTenPB(rs.getString("TenPB"));
+                list.add(nv);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
     // Đếm tổng nhân viên
     public int countAllNhanVien() {
@@ -364,7 +379,9 @@ public List<NhanVien> getByPhongBan(String maPB) {
                 rs.getString("MaPB"),
                 rs.getString("TenPB"),
                 rs.getString("Email"),
-                rs.getString("TrangThai")
+                rs.getString("TrangThai"),
+                rs.getDouble("HeSoLuong"),
+                rs.getDouble("LuongCoBan")
         );
 
     }

@@ -1,6 +1,7 @@
 $(document).ready(function() {
-    // Gắn event click cho link sidebar
-    $(document).on("click", "a.ajax-link", function(e) {
+  
+    $(document).on("click", "a.ajax-link", function() {
+       
         const url = $(this).attr("href");
 
         $.get(url, function(data) {

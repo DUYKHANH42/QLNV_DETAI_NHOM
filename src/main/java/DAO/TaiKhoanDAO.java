@@ -77,18 +77,35 @@ public class TaiKhoanDAO {
     }
 
     public boolean insert(TaiKhoan tk) {
-        String sql = "INSERT INTO TAIKHOAN (MaNV, TenDangNhap, MatKhau, VaiTro) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+    String checkSql = "SELECT COUNT(*) FROM TaiKhoan WHERE TenDangNhap = ?";
+    String insertSql = "INSERT INTO TaiKhoan (MaNV, TenDangNhap, MatKhau, VaiTro) VALUES (?, ?, ?, ?)";
+
+    try (Connection conn = DBConnection.getConnection()) {
+
+        // 1️⃣ Kiểm tra tồn tại
+        try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+            psCheck.setString(1, tk.getTenDangNhap());
+            ResultSet rs = psCheck.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                return false;  
+            }
+        }
+
+        // 2️⃣ Insert
+        try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
             ps.setInt(1, tk.getMaNV());
             ps.setString(2, tk.getTenDangNhap());
             ps.setString(3, tk.getMatKhau());
             ps.setString(4, tk.getVaiTro());
             return ps.executeUpdate() > 0;
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
-        return false;
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
     }
+    return false;
+}
+
 
     public boolean update(TaiKhoan tk) {
         String sql = "UPDATE TAIKHOAN SET TenDangNhap=?, MatKhau=?, VaiTro=? WHERE MaNV=?";

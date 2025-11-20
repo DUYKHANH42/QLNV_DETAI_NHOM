@@ -12,7 +12,7 @@ import java.sql.DriverManager;
  * @author ADMIN
  */
 public class DBConnection {
-    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=QL_PhanCongCongViec;encrypt=true;"
+    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=QL_PhanCongCongViec_2;encrypt=true;"
             + "trustServerCertificate=true";
     private static final String USER = "sa"; 
     private static final String PASSWORD = "sa";

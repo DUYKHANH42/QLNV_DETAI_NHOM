@@ -111,32 +111,27 @@ public class AuthFilter implements Filter {
         HttpSession session = req.getSession(false);
         TaiKhoan user = (session != null) ? (TaiKhoan) session.getAttribute("account") : null;
 
-// 1. Bỏ qua tài nguyên tĩnh
         if (uri.contains("/css/") || uri.contains("/js/") || uri.contains("/img/") || uri.contains("/JSP/Admin/layout/")) {
             chain.doFilter(request, response);
             return;
         }
         if (uri.endsWith(".jsp")
                 && !uri.endsWith("/login.jsp")
-                && !uri.endsWith("/register.jsp")
-                && !uri.contains("/layout/")) { // bỏ qua các JSP layout
+                && !uri.contains("/layout/")) { 
             res.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
-// 2. Bỏ qua login & register
         if (uri.equals("/") || uri.endsWith("/login") || uri.endsWith("/login.jsp")) {
             chain.doFilter(request, response);
             return;
         }
 
-// 3. Kiểm tra đăng nhập
         if (user == null) {
             res.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
-// 4. Cho phép đi tiếp
         chain.doFilter(request, response);
 
     }
